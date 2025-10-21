@@ -23,6 +23,10 @@ namespace GitHelper
         private ComboBox cmbInterval;
         private Label lblAutoSave;
         private System.Windows.Forms.Timer autoSaveTimer;
+        
+        // 系统托盘相关
+        private NotifyIcon notifyIcon;
+        private bool isReallyClosing = false;
 
         public MainForm()
         {
@@ -171,6 +175,26 @@ namespace GitHelper
             cmbInterval.Items.AddRange(new object[] { "2分钟", "3分钟", "5分钟", "10分钟", "15分钟" });
             cmbInterval.SelectedIndex = 2; // 默认5分钟
             cmbInterval.SelectedIndexChanged += CmbInterval_SelectedIndexChanged;
+
+            // 系统托盘图标
+            notifyIcon = new NotifyIcon
+            {
+                Text = "Git 快捷助手",
+                Visible = false,
+                Icon = System.Drawing.SystemIcons.Application
+            };
+            notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
+
+            // 托盘右键菜单
+            var trayMenu = new ContextMenuStrip();
+            trayMenu.Items.Add("显示窗口", null, (s, e) => ShowWindow());
+            trayMenu.Items.Add(new ToolStripSeparator());
+            trayMenu.Items.Add("退出", null, (s, e) => ReallyClose());
+            notifyIcon.ContextMenuStrip = trayMenu;
+
+            // 添加关闭事件处理
+            this.FormClosing += MainForm_FormClosing;
+            this.Resize += MainForm_Resize;
 
             // 添加控件
             this.Controls.Add(lblCurrentDir);
@@ -639,12 +663,107 @@ namespace GitHelper
             }
         }
 
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (!isReallyClosing)
+            {
+                e.Cancel = true;
+                
+                var result = new Form
+                {
+                    Text = "关闭选项",
+                    Size = new System.Drawing.Size(350, 180),
+                    StartPosition = FormStartPosition.CenterParent,
+                    FormBorderStyle = FormBorderStyle.FixedDialog,
+                    MaximizeBox = false,
+                    MinimizeBox = false
+                };
+
+                var label = new Label
+                {
+                    Location = new System.Drawing.Point(30, 20),
+                    Size = new System.Drawing.Size(280, 40),
+                    Text = "请选择关闭方式：",
+                    Font = new System.Drawing.Font("Microsoft YaHei", 10F),
+                    TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+                };
+
+                var btnMinimize = new Button
+                {
+                    Location = new System.Drawing.Point(30, 70),
+                    Size = new System.Drawing.Size(130, 40),
+                    Text = "最小化到托盘",
+                    Font = new System.Drawing.Font("Microsoft YaHei", 10F),
+                    DialogResult = DialogResult.OK
+                };
+
+                var btnExit = new Button
+                {
+                    Location = new System.Drawing.Point(180, 70),
+                    Size = new System.Drawing.Size(130, 40),
+                    Text = "退出程序",
+                    Font = new System.Drawing.Font("Microsoft YaHei", 10F),
+                    DialogResult = DialogResult.Yes
+                };
+
+                result.Controls.AddRange(new Control[] { label, btnMinimize, btnExit });
+                result.AcceptButton = btnMinimize;
+
+                var dialogResult = result.ShowDialog();
+                result.Dispose();
+
+                if (dialogResult == DialogResult.Yes)
+                {
+                    ReallyClose();
+                }
+                else if (dialogResult == DialogResult.OK)
+                {
+                    MinimizeToTray();
+                }
+            }
+        }
+
+        private void MainForm_Resize(object sender, EventArgs e)
+        {
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                MinimizeToTray();
+            }
+        }
+
+        private void NotifyIcon_DoubleClick(object sender, EventArgs e)
+        {
+            ShowWindow();
+        }
+
+        private void ShowWindow()
+        {
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+            this.Activate();
+            notifyIcon.Visible = false;
+        }
+
+        private void MinimizeToTray()
+        {
+            this.Hide();
+            notifyIcon.Visible = true;
+            notifyIcon.ShowBalloonTip(2000, "Git 快捷助手", "程序已最小化到系统托盘，双击托盘图标可恢复窗口。", ToolTipIcon.Info);
+        }
+
+        private void ReallyClose()
+        {
+            isReallyClosing = true;
+            this.Close();
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
                 autoSaveTimer?.Stop();
                 autoSaveTimer?.Dispose();
+                notifyIcon?.Dispose();
             }
             base.Dispose(disposing);
         }
