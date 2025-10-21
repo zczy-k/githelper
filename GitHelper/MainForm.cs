@@ -15,19 +15,35 @@ namespace GitHelper
         private Button btnRestoreFile;
         private Button btnReset;
         private Button btnExit;
+        private Button btnChangeDir;
         private string currentDirectory;
+        
+        // 自动保存相关
+        private CheckBox chkAutoSave;
+        private ComboBox cmbInterval;
+        private Label lblAutoSave;
+        private System.Windows.Forms.Timer autoSaveTimer;
 
         public MainForm()
         {
             InitializeComponent();
-            currentDirectory = Directory.GetCurrentDirectory();
+            InitializeAutoSaveTimer();
+            
+            // 启动时选择目录
+            if (!SelectDirectory())
+            {
+                // 用户取消选择，使用当前目录
+                currentDirectory = Directory.GetCurrentDirectory();
+            }
+            
+            UpdateDirectoryDisplay();
             CheckAndInitGit();
         }
 
         private void InitializeComponent()
         {
             this.Text = "Git 快捷助手";
-            this.Size = new System.Drawing.Size(800, 600);
+            this.Size = new System.Drawing.Size(800, 650);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -36,10 +52,22 @@ namespace GitHelper
             lblCurrentDir = new Label
             {
                 Location = new System.Drawing.Point(20, 20),
-                Size = new System.Drawing.Size(740, 30),
-                Font = new System.Drawing.Font("Microsoft YaHei", 10F),
-                Text = $"当前目录: {currentDirectory}"
+                Size = new System.Drawing.Size(580, 30),
+                Font = new System.Drawing.Font("Microsoft YaHei", 9F),
+                Text = "当前目录: 未选择",
+                AutoEllipsis = true
             };
+
+            // 选择/切换目录按钮
+            btnChangeDir = new Button
+            {
+                Location = new System.Drawing.Point(610, 17),
+                Size = new System.Drawing.Size(150, 35),
+                Text = "选择/切换目录",
+                Font = new System.Drawing.Font("Microsoft YaHei", 9F),
+                BackColor = System.Drawing.Color.LightSkyBlue
+            };
+            btnChangeDir.Click += BtnChangeDir_Click;
 
             // 输出文本框
             txtOutput = new TextBox
@@ -113,8 +141,40 @@ namespace GitHelper
             };
             btnExit.Click += (s, e) => this.Close();
 
+            // 自动保存控件
+            lblAutoSave = new Label
+            {
+                Location = new System.Drawing.Point(20, 595),
+                Size = new System.Drawing.Size(80, 25),
+                Text = "自动保存:",
+                Font = new System.Drawing.Font("Microsoft YaHei", 9F),
+                TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            };
+
+            chkAutoSave = new CheckBox
+            {
+                Location = new System.Drawing.Point(100, 595),
+                Size = new System.Drawing.Size(80, 25),
+                Text = "启用",
+                Font = new System.Drawing.Font("Microsoft YaHei", 9F),
+                Checked = false
+            };
+            chkAutoSave.CheckedChanged += ChkAutoSave_CheckedChanged;
+
+            cmbInterval = new ComboBox
+            {
+                Location = new System.Drawing.Point(190, 595),
+                Size = new System.Drawing.Size(120, 25),
+                Font = new System.Drawing.Font("Microsoft YaHei", 9F),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cmbInterval.Items.AddRange(new object[] { "2分钟", "3分钟", "5分钟", "10分钟", "15分钟" });
+            cmbInterval.SelectedIndex = 2; // 默认5分钟
+            cmbInterval.SelectedIndexChanged += CmbInterval_SelectedIndexChanged;
+
             // 添加控件
             this.Controls.Add(lblCurrentDir);
+            this.Controls.Add(btnChangeDir);
             this.Controls.Add(txtOutput);
             this.Controls.Add(btnStatus);
             this.Controls.Add(btnCommit);
@@ -122,6 +182,139 @@ namespace GitHelper
             this.Controls.Add(btnRestoreFile);
             this.Controls.Add(btnReset);
             this.Controls.Add(btnExit);
+            this.Controls.Add(lblAutoSave);
+            this.Controls.Add(chkAutoSave);
+            this.Controls.Add(cmbInterval);
+        }
+
+        private bool SelectDirectory()
+        {
+            using (var folderDialog = new FolderBrowserDialog())
+            {
+                folderDialog.Description = "请选择要管理的项目文件夹";
+                folderDialog.ShowNewFolderButton = true;
+                
+                if (!string.IsNullOrEmpty(currentDirectory) && Directory.Exists(currentDirectory))
+                {
+                    folderDialog.SelectedPath = currentDirectory;
+                }
+                else
+                {
+                    folderDialog.SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                }
+
+                if (folderDialog.ShowDialog() == DialogResult.OK)
+                {
+                    currentDirectory = folderDialog.SelectedPath;
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        private void UpdateDirectoryDisplay()
+        {
+            lblCurrentDir.Text = $"当前目录: {currentDirectory}";
+            this.Text = $"Git 快捷助手 - {Path.GetFileName(currentDirectory)}";
+        }
+
+        private void BtnChangeDir_Click(object sender, EventArgs e)
+        {
+            bool wasAutoSaveEnabled = chkAutoSave.Checked;
+            if (wasAutoSaveEnabled)
+            {
+                chkAutoSave.Checked = false;
+            }
+
+            if (SelectDirectory())
+            {
+                UpdateDirectoryDisplay();
+                CheckAndInitGit();
+                txtOutput.Clear();
+                txtOutput.AppendText($"已切换到目录: {currentDirectory}\\r\\n");
+                
+                if (wasAutoSaveEnabled)
+                {
+                    txtOutput.AppendText("提示: 自动保存已停止，如需要请重新启用\\r\\n");
+                }
+            }
+        }
+
+        private void InitializeAutoSaveTimer()
+        {
+            autoSaveTimer = new System.Windows.Forms.Timer();
+            autoSaveTimer.Tick += AutoSaveTimer_Tick;
+            UpdateTimerInterval();
+        }
+
+        private void UpdateTimerInterval()
+        {
+            int[] intervals = { 2, 3, 5, 10, 15 };
+            int selectedIndex = cmbInterval.SelectedIndex;
+            if (selectedIndex >= 0 && selectedIndex < intervals.Length)
+            {
+                autoSaveTimer.Interval = intervals[selectedIndex] * 60 * 1000;
+            }
+        }
+
+        private void ChkAutoSave_CheckedChanged(object sender, EventArgs e)
+        {
+            if (chkAutoSave.Checked)
+            {
+                autoSaveTimer.Start();
+                txtOutput.AppendText($"\\r\\n[自动保存] 已启用，间隔: {cmbInterval.Text}\\r\\n");
+            }
+            else
+            {
+                autoSaveTimer.Stop();
+                txtOutput.AppendText("\\r\\n[自动保存] 已禁用\\r\\n");
+            }
+        }
+
+        private void CmbInterval_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateTimerInterval();
+            if (chkAutoSave.Checked)
+            {
+                autoSaveTimer.Stop();
+                autoSaveTimer.Start();
+                txtOutput.AppendText($"\\r\\n[自动保存] 时间间隔已更改为: {cmbInterval.Text}\\r\\n");
+            }
+        }
+
+        private void AutoSaveTimer_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                var statusProcess = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "git",
+                        Arguments = "status --porcelain",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        CreateNoWindow = true,
+                        WorkingDirectory = currentDirectory
+                    }
+                };
+
+                statusProcess.Start();
+                string statusOutput = statusProcess.StandardOutput.ReadToEnd();
+                statusProcess.WaitForExit();
+
+                if (!string.IsNullOrWhiteSpace(statusOutput))
+                {
+                    string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                    RunGitCommandSilent("add .");
+                    RunGitCommandSilent($"commit -m \\"自动保存 - {timestamp}\\"");
+                    txtOutput.AppendText($"\\r\\n[自动保存] {timestamp} - 更改已自动提交\\r\\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtOutput.AppendText($"\\r\\n[自动保存错误] {ex.Message}\\r\\n");
+            }
         }
 
         private void CheckAndInitGit()
@@ -413,8 +606,47 @@ namespace GitHelper
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"执行Git命令时出错：\n{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"执行Git命令时出错：\\n{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void RunGitCommandSilent(string arguments)
+        {
+            try
+            {
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "git",
+                        Arguments = arguments,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true,
+                        WorkingDirectory = currentDirectory,
+                        StandardOutputEncoding = System.Text.Encoding.UTF8,
+                        StandardErrorEncoding = System.Text.Encoding.UTF8
+                    }
+                };
+
+                process.Start();
+                process.WaitForExit();
+            }
+            catch
+            {
+                // 静默执行，不显示错误
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                autoSaveTimer?.Stop();
+                autoSaveTimer?.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 }
