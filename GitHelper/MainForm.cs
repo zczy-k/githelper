@@ -43,7 +43,7 @@ namespace GitHelper
         private void InitializeComponent()
         {
             this.Text = "Git 快捷助手";
-            this.Size = new System.Drawing.Size(800, 650);
+            this.Size = new System.Drawing.Size(800, 680);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
