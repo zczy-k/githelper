@@ -16,6 +16,7 @@ namespace GitHelper
         private Button btnReset;
         private Button btnExit;
         private Button btnChangeDir;
+        private Button btnRecentDirs;
         private string currentDirectory;
         
         // 自动保存相关
@@ -33,11 +34,20 @@ namespace GitHelper
             InitializeComponent();
             InitializeAutoSaveTimer();
             
-            // 启动时选择目录
-            if (!SelectDirectory())
+            // 启动时优先加载上次使用的目录
+            string lastDir = ConfigManager.GetLastDirectory();
+            if (!string.IsNullOrEmpty(lastDir) && Directory.Exists(lastDir))
             {
-                // 用户取消选择，使用当前目录
-                currentDirectory = Directory.GetCurrentDirectory();
+                currentDirectory = lastDir;
+            }
+            else
+            {
+                // 如果没有历史记录，则选择目录
+                if (!SelectDirectory())
+                {
+                    // 用户取消选择，使用当前目录
+                    currentDirectory = Directory.GetCurrentDirectory();
+                }
             }
             
             UpdateDirectoryDisplay();
@@ -67,18 +77,29 @@ namespace GitHelper
             lblCurrentDir = new Label
             {
                 Location = new System.Drawing.Point(20, 20),
-                Size = new System.Drawing.Size(580, 30),
+                Size = new System.Drawing.Size(480, 30),
                 Font = new System.Drawing.Font("Microsoft YaHei", 9F),
                 Text = "当前目录: 未选择",
                 AutoEllipsis = true
             };
 
+            // 历史记录按钮
+            btnRecentDirs = new Button
+            {
+                Location = new System.Drawing.Point(510, 17),
+                Size = new System.Drawing.Size(100, 35),
+                Text = "▼ 最近目录",
+                Font = new System.Drawing.Font("Microsoft YaHei", 9F),
+                BackColor = System.Drawing.Color.LightGreen
+            };
+            btnRecentDirs.Click += BtnRecentDirs_Click;
+
             // 选择/切换目录按钮
             btnChangeDir = new Button
             {
-                Location = new System.Drawing.Point(610, 17),
-                Size = new System.Drawing.Size(150, 35),
-                Text = "选择/切换目录",
+                Location = new System.Drawing.Point(620, 17),
+                Size = new System.Drawing.Size(140, 35),
+                Text = "浏览新目录",
                 Font = new System.Drawing.Font("Microsoft YaHei", 9F),
                 BackColor = System.Drawing.Color.LightSkyBlue
             };
@@ -209,6 +230,7 @@ namespace GitHelper
 
             // 添加控件
             this.Controls.Add(lblCurrentDir);
+            this.Controls.Add(btnRecentDirs);
             this.Controls.Add(btnChangeDir);
             this.Controls.Add(txtOutput);
             this.Controls.Add(btnStatus);
@@ -263,16 +285,75 @@ namespace GitHelper
 
             if (SelectDirectory())
             {
-                UpdateDirectoryDisplay();
-                CheckAndInitGit();
-                txtOutput.Clear();
-                txtOutput.AppendText($"已切换到目录: {currentDirectory}\\r\\n");
+                SwitchToDirectory(currentDirectory);
                 
                 if (wasAutoSaveEnabled)
                 {
                     txtOutput.AppendText("提示: 自动保存已停止，如需要请重新启用\\r\\n");
                 }
             }
+        }
+
+        private void BtnRecentDirs_Click(object sender, EventArgs e)
+        {
+            var recentDirs = ConfigManager.GetRecentDirectories();
+            
+            if (recentDirs.Count == 0)
+            {
+                MessageBox.Show("暂无历史记录", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var menu = new ContextMenuStrip();
+            menu.Font = new System.Drawing.Font("Microsoft YaHei", 9F);
+
+            foreach (var dir in recentDirs)
+            {
+                var item = new ToolStripMenuItem
+                {
+                    Text = dir,
+                    Tag = dir,
+                    Checked = (dir == currentDirectory)
+                };
+                item.Click += (s, args) =>
+                {
+                    string selectedDir = (s as ToolStripMenuItem)?.Tag as string;
+                    if (!string.IsNullOrEmpty(selectedDir) && selectedDir != currentDirectory)
+                    {
+                        bool wasAutoSaveEnabled = chkAutoSave.Checked;
+                        if (wasAutoSaveEnabled)
+                        {
+                            chkAutoSave.Checked = false;
+                        }
+                        
+                        SwitchToDirectory(selectedDir);
+                        
+                        if (wasAutoSaveEnabled)
+                        {
+                            txtOutput.AppendText("提示: 自动保存已停止，如需要请重新启用\\r\\n");
+                        }
+                    }
+                };
+                menu.Items.Add(item);
+            }
+
+            menu.Show(btnRecentDirs, new System.Drawing.Point(0, btnRecentDirs.Height));
+        }
+
+        private void SwitchToDirectory(string directory)
+        {
+            if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+            {
+                MessageBox.Show("目录不存在", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            currentDirectory = directory;
+            ConfigManager.AddRecentDirectory(directory);
+            UpdateDirectoryDisplay();
+            CheckAndInitGit();
+            txtOutput.Clear();
+            txtOutput.AppendText($"已切换到目录: {currentDirectory}\\r\\n");
         }
 
         private void InitializeAutoSaveTimer()
