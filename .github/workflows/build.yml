@@ -1,0 +1,37 @@
+name: Build Git Helper
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore GitHelper/GitHelper.csproj
+
+    - name: Build
+      run: dotnet build GitHelper/GitHelper.csproj --configuration Release --no-restore
+
+    - name: Publish
+      run: dotnet publish GitHelper/GitHelper.csproj --configuration Release --output ./publish --no-build
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: GitHelper-Windows
+        path: ./publish/GitHelper.exe
+        if-no-files-found: error
