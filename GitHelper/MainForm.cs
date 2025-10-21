@@ -51,6 +51,17 @@ namespace GitHelper
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
+            
+            // 加载窗体图标
+            try
+            {
+                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "icon.ico");
+                if (File.Exists(iconPath))
+                {
+                    this.Icon = new System.Drawing.Icon(iconPath);
+                }
+            }
+            catch { /* 忽略图标加载错误 */ }
 
             // 当前目录标签
             lblCurrentDir = new Label
@@ -181,7 +192,7 @@ namespace GitHelper
             {
                 Text = "Git 快捷助手",
                 Visible = false,
-                Icon = System.Drawing.SystemIcons.Application
+                Icon = this.Icon ?? System.Drawing.SystemIcons.Application
             };
             notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
 
