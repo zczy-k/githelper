@@ -306,7 +306,7 @@ namespace GitHelper
                 
                 if (wasAutoSaveEnabled)
                 {
-                    txtOutput.AppendText("提示: 自动保存已停止，如需要请重新启用\\r\\n");
+                    txtOutput.AppendText("提示: 自动保存已停止，如需要请重新启用" + Environment.NewLine);
                 }
             }
         }
@@ -347,7 +347,7 @@ namespace GitHelper
                         
                         if (wasAutoSaveEnabled)
                         {
-                            txtOutput.AppendText("提示: 自动保存已停止，如需要请重新启用\\r\\n");
+                            txtOutput.AppendText("提示: 自动保存已停止，如需要请重新启用" + Environment.NewLine);
                         }
                     }
                 };
@@ -370,7 +370,7 @@ namespace GitHelper
             UpdateDirectoryDisplay();
             CheckAndInitGit();
             txtOutput.Clear();
-            txtOutput.AppendText($"已切换到目录: {currentDirectory}\\r\\n");
+            txtOutput.AppendText($"已切换到目录: {currentDirectory}" + Environment.NewLine);
         }
 
         private void InitializeAutoSaveTimer()
@@ -395,12 +395,12 @@ namespace GitHelper
             if (chkAutoSave.Checked)
             {
                 autoSaveTimer.Start();
-                txtOutput.AppendText($"\\r\\n[自动保存] 已启用，间隔: {cmbInterval.Text}\\r\\n");
+                txtOutput.AppendText(Environment.NewLine + $"[自动保存] 已启用，间隔: {cmbInterval.Text}" + Environment.NewLine);
             }
             else
             {
                 autoSaveTimer.Stop();
-                txtOutput.AppendText("\\r\\n[自动保存] 已禁用\\r\\n");
+                txtOutput.AppendText(Environment.NewLine + "[自动保存] 已禁用" + Environment.NewLine);
             }
         }
 
@@ -411,7 +411,7 @@ namespace GitHelper
             {
                 autoSaveTimer.Stop();
                 autoSaveTimer.Start();
-                txtOutput.AppendText($"\\r\\n[自动保存] 时间间隔已更改为: {cmbInterval.Text}\\r\\n");
+                txtOutput.AppendText(Environment.NewLine + $"[自动保存] 时间间隔已更改为: {cmbInterval.Text}" + Environment.NewLine);
             }
         }
 
@@ -441,12 +441,13 @@ namespace GitHelper
                     string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                     RunGitCommandSilent("add .");
                     RunGitCommandSilent($"commit -m \"自动保存 - {timestamp}\"");
-                    txtOutput.AppendText($"\\r\\n[自动保存] {timestamp} - 更改已自动提交\\r\\n");
+                    txtOutput.AppendText($"{timestamp} [自动保存] 更改已自动提交" + Environment.NewLine);
                 }
             }
             catch (Exception ex)
             {
-                txtOutput.AppendText($"\\r\\n[自动保存错误] {ex.Message}\\r\\n");
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                txtOutput.AppendText($"{timestamp} [自动保存错误] {ex.Message}" + Environment.NewLine);
             }
         }
 
