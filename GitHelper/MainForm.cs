@@ -355,7 +355,7 @@ namespace GitHelper
                 if (inputForm.ShowDialog() == DialogResult.OK && !string.IsNullOrWhiteSpace(textBox.Text))
                 {
                     var finalConfirm = MessageBox.Show(
-                        $"最后确认：真的要将整个项目回退到版本 '{textBox.Text}' 吗？\n这无法撤销！\n\n点击"是"继续，点击"否"取消。",
+                        $"最后确认：真的要将整个项目回退到版本 '{textBox.Text}' 吗？\n这无法撤销！\n\n点击'是'继续，点击'否'取消。",
                         "最终确认",
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Stop
