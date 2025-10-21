@@ -62,16 +62,33 @@ namespace GitHelper
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             
-            // 加载窗体图标
+            // 加载窗体图标（优先从文件加载，其次使用嵌入资源）
+            System.Drawing.Icon appIcon = null;
             try
             {
                 string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "icon.ico");
                 if (File.Exists(iconPath))
                 {
-                    this.Icon = new System.Drawing.Icon(iconPath);
+                    appIcon = new System.Drawing.Icon(iconPath);
                 }
             }
-            catch { /* 忽略图标加载错误 */ }
+            catch { /* 忽略文件加载错误 */ }
+            
+            // 如果文件加载失败，尝试使用程序嵌入的图标
+            if (appIcon == null)
+            {
+                try
+                {
+                    appIcon = System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                }
+                catch { /* 忽略嵌入资源加载错误 */ }
+            }
+            
+            // 设置窗体图标
+            if (appIcon != null)
+            {
+                this.Icon = appIcon;
+            }
 
             // 当前目录标签
             lblCurrentDir = new Label
@@ -208,12 +225,12 @@ namespace GitHelper
             cmbInterval.SelectedIndex = 2; // 默认5分钟
             cmbInterval.SelectedIndexChanged += CmbInterval_SelectedIndexChanged;
 
-            // 系统托盘图标
+            // 系统托盘图标（使用与窗体相同的图标）
             notifyIcon = new NotifyIcon
             {
                 Text = "Git 快捷助手",
                 Visible = false,
-                Icon = this.Icon ?? System.Drawing.SystemIcons.Application
+                Icon = this.Icon != null ? (System.Drawing.Icon)this.Icon.Clone() : System.Drawing.SystemIcons.Application
             };
             notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
 
