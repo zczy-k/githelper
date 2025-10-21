@@ -43,7 +43,7 @@ namespace GitHelper
         private void InitializeComponent()
         {
             this.Text = "Git 快捷助手";
-            this.Size = new System.Drawing.Size(800, 680);
+            this.Size = new System.Drawing.Size(800, 710);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -144,7 +144,7 @@ namespace GitHelper
             // 自动保存控件
             lblAutoSave = new Label
             {
-                Location = new System.Drawing.Point(20, 595),
+                Location = new System.Drawing.Point(20, 640),
                 Size = new System.Drawing.Size(80, 25),
                 Text = "自动保存:",
                 Font = new System.Drawing.Font("Microsoft YaHei", 9F),
@@ -153,7 +153,7 @@ namespace GitHelper
 
             chkAutoSave = new CheckBox
             {
-                Location = new System.Drawing.Point(100, 595),
+                Location = new System.Drawing.Point(100, 640),
                 Size = new System.Drawing.Size(80, 25),
                 Text = "启用",
                 Font = new System.Drawing.Font("Microsoft YaHei", 9F),
@@ -163,7 +163,7 @@ namespace GitHelper
 
             cmbInterval = new ComboBox
             {
-                Location = new System.Drawing.Point(190, 595),
+                Location = new System.Drawing.Point(190, 640),
                 Size = new System.Drawing.Size(120, 25),
                 Font = new System.Drawing.Font("Microsoft YaHei", 9F),
                 DropDownStyle = ComboBoxStyle.DropDownList
