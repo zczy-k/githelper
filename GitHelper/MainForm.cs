@@ -541,7 +541,7 @@ namespace GitHelper
 
         private void BtnLog_Click(object sender, EventArgs e)
         {
-            RunGitCommand("log --graph --pretty=format:%h %s (%cr)");
+            RunGitCommand("log --graph --oneline --decorate --date=relative -20");
         }
 
         private void BtnRestoreFile_Click(object sender, EventArgs e)
