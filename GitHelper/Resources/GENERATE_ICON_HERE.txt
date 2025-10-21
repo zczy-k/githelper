@@ -1,0 +1,19 @@
+⚠️ 需要生成 icon.ico 文件
+
+请按照以下步骤操作：
+
+1. 打开根目录的 SETUP_ICON.md 文件查看详细说明
+
+2. 快速方法：
+   - 访问 https://convertio.co/zh/svg-ico/
+   - 上传本文件夹中的 icon.svg
+   - 下载转换后的 icon.ico
+   - 放到这个文件夹（Resources/）
+
+3. 编译项目：
+   cd GitHelper
+   .\build.bat
+
+完成后，删除本文件即可。
+
+详细说明：../SETUP_ICON.md

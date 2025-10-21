@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形渐变 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="2" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- 背景圆 -->
+  <circle cx="128" cy="128" r="118" fill="url(#bgGradient)" filter="url(#shadow)"/>
+  
+  <!-- Git 分支图案 -->
+  <!-- 主分支线 -->
+  <line x1="80" y1="180" x2="80" y2="76" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- 分支线 -->
+  <path d="M 80 120 Q 110 120 130 95" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <line x1="130" y1="95" x2="130" y2="76" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- 分支线2 -->
+  <path d="M 80 150 Q 120 150 150 120" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <line x1="150" y1="120" x2="150" y2="76" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- 提交点 (commits) -->
+  <circle cx="80" cy="76" r="12" fill="white"/>
+  <circle cx="130" cy="76" r="12" fill="white"/>
+  <circle cx="150" cy="76" r="12" fill="white"/>
+  <circle cx="80" cy="120" r="12" fill="white"/>
+  <circle cx="80" cy="150" r="12" fill="white"/>
+  <circle cx="80" cy="180" r="12" fill="white"/>
+  
+  <!-- 中心图标 - 齿轮/工具符号 -->
+  <g transform="translate(170, 155)">
+    <!-- 齿轮外圈 -->
+    <circle cx="0" cy="0" r="32" fill="#F0F0F0" stroke="#357ABD" stroke-width="3"/>
+    <!-- 内圈 -->
+    <circle cx="0" cy="0" r="12" fill="#357ABD"/>
+    <!-- 齿轮齿 -->
+    <rect x="-4" y="-38" width="8" height="12" fill="#F0F0F0" rx="2"/>
+    <rect x="-4" y="26" width="8" height="12" fill="#F0F0F0" rx="2"/>
+    <rect x="26" y="-4" width="12" height="8" fill="#F0F0F0" rx="2"/>
+    <rect x="-38" y="-4" width="12" height="8" fill="#F0F0F0" rx="2"/>
+  </g>
+  
+  <!-- 字母 "G" -->
+  <text x="55" y="235" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">Git</text>
+</svg>
