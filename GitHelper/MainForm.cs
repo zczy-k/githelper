@@ -307,7 +307,7 @@ namespace GitHelper
                 {
                     string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                     RunGitCommandSilent("add .");
-                    RunGitCommandSilent($"commit -m \\"自动保存 - {timestamp}\\"");
+                    RunGitCommandSilent($"commit -m \"自动保存 - {timestamp}\"");
                     txtOutput.AppendText($"\\r\\n[自动保存] {timestamp} - 更改已自动提交\\r\\n");
                 }
             }
