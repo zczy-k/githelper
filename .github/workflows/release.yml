@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送 v 开头的标签时触发，如 v1.0.0
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore GitHelper/GitHelper.csproj
+      
+    - name: Build and Publish
+      run: |
+        dotnet publish GitHelper/GitHelper.csproj `
+          -c Release `
+          -r win-x64 `
+          --self-contained true `
+          -p:PublishSingleFile=true `
+          -p:PublishReadyToRun=true `
+          -p:PublishTrimmed=false `
+          -o ./publish
+      
+    - name: Create Release Package
+      run: |
+        # 创建发布目录
+        New-Item -ItemType Directory -Force -Path ./release
+        
+        # 复制主程序
+        Copy-Item ./publish/GitHelper.exe ./release/
+        
+        # 复制图标资源
+        if (Test-Path ./GitHelper/Resources) {
+          New-Item -ItemType Directory -Force -Path ./release/Resources
+          Copy-Item ./GitHelper/Resources/* ./release/Resources/
+        }
+        
+        # 创建简单说明文件
+        @"
+        Git 快捷助手 v${{ github.ref_name }}
+        
+        使用方法：
+        1. 解压所有文件到任意目录
+        2. 双击 GitHelper.exe 运行
+        3. 选择要管理的项目文件夹
+        
+        系统要求：
+        - Windows 10/11 (64-bit)
+        - 已自带 .NET 运行时，无需额外安装
+        
+        完整文档：https://github.com/zczy-k/githelper
+        "@ | Out-File -FilePath ./release/使用说明.txt -Encoding UTF8
+        
+        # 打包成 ZIP
+        Compress-Archive -Path ./release/* -DestinationPath GitHelper-${{ github.ref_name }}-win-x64.zip
+        
+    - name: Extract version info
+      id: version
+      run: |
+        $version = "${{ github.ref_name }}" -replace '^v', ''
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          GitHelper-${{ github.ref_name }}-win-x64.zip
+        body: |
+          ## 🎉 Git 快捷助手 ${{ steps.version.outputs.version }}
+          
+          ### 📦 下载
+          下载 `GitHelper-${{ github.ref_name }}-win-x64.zip` 并解压即可使用。
+          
+          ### ✨ 主要功能
+          - 🎯 简单易用的 Git 图形化管理
+          - 📁 智能目录历史记忆
+          - ⏰ 自动保存功能
+          - 🔔 系统托盘支持
+          
+          ### 💾 系统要求
+          - Windows 10/11 (64-bit)
+          - 已自带运行时，无需安装其他依赖
+          
+          ### 📖 使用方法
+          1. 解压所有文件到任意目录
+          2. 双击 `GitHelper.exe` 运行
+          3. 选择要管理的项目文件夹
+          4. 开始使用！
+          
+          完整文档请查看 [README.md](https://github.com/zczy-k/githelper/blob/main/README.md)
+          
+          ---
+          
+          ### 📝 更新内容
+          <!-- 在这里手动添加更新日志 -->
+          
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
