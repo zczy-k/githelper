@@ -727,13 +727,16 @@ namespace GitHelper
                 
                 if (!string.IsNullOrEmpty(output))
                 {
-                    txtOutput.AppendText(output);
+                    // 将Unix换行符转换为Windows换行符（避免重复）
+                    string normalizedOutput = output.Replace("\r\n", "\n").Replace("\n", "\r\n");
+                    txtOutput.AppendText(normalizedOutput);
                 }
                 
                 if (!string.IsNullOrEmpty(error))
                 {
                     txtOutput.AppendText("\r\n");
-                    txtOutput.AppendText(error);
+                    string normalizedError = error.Replace("\r\n", "\n").Replace("\n", "\r\n");
+                    txtOutput.AppendText(normalizedError);
                 }
 
                 txtOutput.AppendText("\r\n\r\n执行完成。");
